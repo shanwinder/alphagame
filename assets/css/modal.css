@@ -59,3 +59,16 @@
 .modal-button:hover {
     background-color: #357ABD;
 }
+
+/* --- ไฟล์: assets/css/modal.css (เพิ่มสไตล์) --- */
+/* ... โค้ด CSS ของ modal เดิม ... */
+
+.star-container {
+    font-size: 4rem; /* ขนาดดาว */
+    margin: 15px 0;
+}
+
+.star-icon {
+    transition: color 0.3s ease;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}

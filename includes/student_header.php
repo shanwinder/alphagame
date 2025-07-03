@@ -1,4 +1,5 @@
 <?php
+// --- ไฟล์: includes/student_header.php (ฉบับปรับปรุงธีมอวกาศ) ---
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
     header("Location: ../pages/login.php");
     exit();
@@ -7,15 +8,19 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
 
 <style>
     .student-navbar {
-        background: linear-gradient(to right, #d0f0fd, #fef6e4);
+        /* ทำให้พื้นหลังโปร่งแสงและเบลอฉากหลัง */
+        background: rgba(10, 25, 47, 0.85); /* สีน้ำเงินเข้มโปร่งแสง */
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px); /* สำหรับ Safari */
         font-family: 'Kanit', sans-serif;
         padding: 0.5rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* เส้นขอบบางๆ */
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
     .student-navbar .navbar-brand {
         font-size: 1.5rem;
-        color: #0d3b66;
+        color: #50e3c2; /* สีเขียวอมฟ้า Sci-fi */
         font-weight: bold;
         display: flex;
         align-items: center;
@@ -27,22 +32,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
     }
 
     .student-navbar .nav-link {
-        color: #1e6091;
+        color: #e2e8f0; /* สีขาวอมเทา */
         font-size: 1.05rem;
         margin-left: 15px;
+        transition: color 0.2s;
     }
 
     .student-navbar .nav-link:hover {
-        color: #ff6f61;
+        color: #f5a623; /* สีส้มเมื่อ hover */
     }
 
     .navbar-profile {
-        background: #ffffffcc;
+        background: rgba(255, 255, 255, 0.1); /* พื้นหลังโปรไฟล์โปร่งแสง */
         border-radius: 12px;
         padding: 5px 12px;
         margin-left: 20px;
         font-size: 0.95rem;
-        color: #003049;
+        color: #e2e8f0; /* สีตัวอักษรโปรไฟล์ */
         display: flex;
         align-items: center;
         gap: 6px;

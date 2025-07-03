@@ -1,94 +1,116 @@
 <?php
+// --- ไฟล์: pages/dashboard.php (ฉบับปรับปรุง) ---
+
 require_once '../includes/db.php';
-require_once '../includes/header.php'; // ✅ ใช้งาน header
+require_once '../includes/header.php';
 require_once '../includes/auth.php';
 requireAdmin();
 
-// ดึงข้อมูลนักเรียนทั้งหมด
-$sql = "SELECT id, student_id, name, class_level, created_at FROM users WHERE role = 'student' ORDER BY class_level, name";
+// ✅ ปรับปรุง SQL Query ให้ดึงข้อมูลความคืบหน้าของนักเรียนมาด้วย
+// โดยการ LEFT JOIN กับตาราง progress และนับจำนวนด่านที่ผ่าน (stars_awarded > 0)
+$sql = "SELECT
+            u.id,
+            u.student_id,
+            u.name,
+            u.class_level,
+            u.created_at,
+            COUNT(p.id) AS completed_stages
+        FROM
+            users u
+        LEFT JOIN
+            progress p ON u.id = p.user_id AND p.stars_awarded > 0
+        WHERE
+            u.role = 'student'
+        GROUP BY
+            u.id
+        ORDER BY
+            u.class_level, u.name";
+
 $result = $conn->query($sql);
+$total_stages = 50; // จำนวนด่านทั้งหมดของเกม
 ?>
 
-<?php if (isset($_GET['deleted'])): ?>
-    <div class="alert alert-success">
-        ✅ ลบผู้ใช้ <strong><?= htmlspecialchars((string)urldecode($_GET['deleted'])) ?></strong> เรียบร้อยแล้ว
-    </div>
-<?php elseif (isset($_GET['deleted_count'])): ?>
-    <div class="alert alert-success">
-        ✅ ลบผู้ใช้จำนวน <strong><?= (int)$_GET['deleted_count'] ?></strong> คนเรียบร้อยแล้ว
-    </div>
-<?php elseif (isset($_GET['error']) && $_GET['error'] === 'cannot_delete_admin'): ?>
-    <div class="alert alert-danger">
-        ❌ ไม่สามารถลบผู้ดูแลระบบได้
-    </div>
-<?php elseif (isset($_GET['error']) && $_GET['error'] === 'user_not_found'): ?>
-    <div class="alert alert-warning">
-        ⚠️ ไม่พบผู้ใช้ที่ต้องการลบ
-    </div>
-<?php elseif (isset($_GET['error']) && $_GET['error'] === 'delete_failed'): ?>
-    <div class="alert alert-danger">
-        ❌ เกิดข้อผิดพลาดในการลบผู้ใช้ กรุณาลองใหม่อีกครั้ง
-    </div>
-<?php endif; ?>
+<div class="container py-4">
 
+    <?php if (isset($_GET['deleted'])): ?>
+        <div class="alert alert-success">
+            ✅ ลบผู้ใช้ <strong><?= htmlspecialchars(urldecode($_GET['deleted'])) ?></strong> เรียบร้อยแล้ว
+        </div>
+    <?php elseif (isset($_GET['deleted_count'])): ?>
+        <div class="alert alert-success">
+            ✅ ลบผู้ใช้จำนวน <strong><?= (int)$_GET['deleted_count'] ?></strong> คนเรียบร้อยแล้ว
+        </div>
+    <?php elseif (isset($_GET['error'])): ?>
+        <div class="alert alert-danger">
+            ❌ เกิดข้อผิดพลาด: <?= htmlspecialchars($_GET['error']) ?>
+        </div>
+    <?php endif; ?>
 
-<h1>แดชบอร์ดผู้ดูแลระบบ</h1>
+    <h1 class="mb-4"><i class="fas fa-tachometer-alt"></i> แดชบอร์ดผู้ดูแลระบบ</h1>
 
-<p>
-  <a href="add_user.php" class="btn btn-success btn-sm">+ เพิ่มนักเรียน</a>
-  <a href="import_students.php" class="btn btn-primary btn-sm">+ นำเข้านักเรียน</a>
-</p>
+    <div class="d-flex gap-2 mb-3">
+        <a href="add_user.php" class="btn btn-success"><i class="fas fa-user-plus"></i> เพิ่มนักเรียน</a>
+        <a href="import_students.php" class="btn btn-primary"><i class="fas fa-file-csv"></i> นำเข้านักเรียน</a>
+    </div>
 
-<form method="post" action="delete_multiple_users.php" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้ที่เลือก?');">
-<div class="table-responsive">
-  <table class="table table-bordered table-hover">
-    <thead class="table-light">
-      <tr>
-        <th><input type="checkbox" id="select_all"></th>
-        <th>ลำดับ</th>
-        <th>ชื่อบัญชี</th>
-        <th>ชื่อ - สกุล</th>
-        <th>ชั้นเรียน</th>
-        <th>วันที่เพิ่มบัญชี</th>
-        <th>การจัดการ</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php
-      $index = 1;
-      if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-          echo "<tr>
-                  <td><input type='checkbox' name='user_ids[]' value='{$row['id']}'></td>
-                  <td>{$index}</td>
-                  <td>" . htmlspecialchars($row['student_id']) . "</td>
-                  <td>" . htmlspecialchars($row['name']) . "</td>
-                  <td>" . htmlspecialchars($row['class_level']) . "</td>
-                  <td>" . date('d/m/Y', strtotime($row['created_at'])) . "</td>
-                  <td>
-                    <a href='edit_user.php?id={$row['id']}' class='btn btn-warning btn-sm'>แก้ไข</a>
-                    <a href='delete_user.php?id={$row['id']}' class='btn btn-danger btn-sm' onclick=\"return confirm('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้คนนี้?');\">ลบ</a>
-                  </td>
-                </tr>";
-          $index++;
-        }
-      } else {
-        echo "<tr><td colspan='7' class='text-center'>ไม่มีข้อมูลนักเรียน</td></tr>";
-      }
-      ?>
-    </tbody>
-  </table>
+    <form method="post" action="delete_multiple_users.php" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้ที่เลือก?');">
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light text-center">
+          <tr>
+            <th><input type="checkbox" id="select_all"></th>
+            <th>ลำดับ</th>
+            <th>ชื่อ - สกุล</th>
+            <th>ชั้นเรียน</th>
+            <th style="width: 35%;">ความคืบหน้า (<?= $total_stages ?> ด่าน)</th> <th>การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          if ($result && $result->num_rows > 0) {
+            $index = 1;
+            while ($row = $result->fetch_assoc()) {
+                // ✅ คำนวณเปอร์เซ็นต์ความคืบหน้า
+                $completed_stages = (int)$row['completed_stages'];
+                $percentage = ($completed_stages / $total_stages) * 100;
+          ?>
+              <tr>
+                <td class="text-center"><input type='checkbox' name='user_ids[]' value='<?= $row['id'] ?>'></td>
+                <td class="text-center"><?= $index++ ?></td>
+                <td><?= htmlspecialchars($row['name']) ?></td>
+                <td class="text-center"><?= htmlspecialchars($row['class_level']) ?></td>
+                <td>
+                  <div class="progress" role="progressbar" aria-label="Student progress" aria-valuenow="<?= $percentage ?>" aria-valuemin="0" aria-valuemax="100" style="height: 25px; font-size: 1rem;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: <?= $percentage ?>%"><?= round($percentage) ?>%</div>
+                  </div>
+                  <div class="text-center small text-muted mt-1"><?= $completed_stages ?>/<?= $total_stages ?> ด่าน</div>
+                </td>
+                <td class="text-center">
+                  <a href='edit_user.php?id=<?= $row['id'] ?>' class='btn btn-warning btn-sm' title="แก้ไข"><i class="fas fa-edit"></i></a>
+                  <a href='delete_user.php?id=<?= $row['id'] ?>' class='btn btn-danger btn-sm' title="ลบ" onclick="return confirm('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้คนนี้?');"><i class="fas fa-trash"></i></a>
+                </td>
+              </tr>
+          <?php
+            }
+          } else {
+            echo "<tr><td colspan='6' class='text-center'>ยังไม่มีข้อมูลนักเรียนในระบบ</td></tr>";
+          }
+          ?>
+        </tbody>
+      </table>
+    </div>
+    <button type="submit" class="btn btn-danger mt-2"><i class="fas fa-trash-alt"></i> ลบผู้ใช้ที่เลือก</button>
+    </form>
 </div>
 
-<button type="submit" class="btn btn-danger btn-sm mt-2">ลบผู้ใช้ที่เลือก</button>
-</form>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script>
-  // Checkbox เลือกทั้งหมด
   document.getElementById('select_all').addEventListener('change', function() {
-    const checked = this.checked;
-    document.querySelectorAll('input[name="user_ids[]"]').forEach(cb => cb.checked = checked);
+    const isChecked = this.checked;
+    document.querySelectorAll('input[name="user_ids[]"]').forEach(checkbox => {
+      checkbox.checked = isChecked;
+    });
   });
 </script>
 
-<?php include '../includes/footer.php'; // ✅ ใช้งาน footer ?>
+<?php include '../includes/footer.php'; ?>

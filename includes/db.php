@@ -2,7 +2,7 @@
 $host = 'localhost';
 $user = 'root';
 $pass = '';
-$db   = 'learning_game'; // ให้ชื่อฐานข้อมูลตรงกับของคุณ
+$db   = 'alpha_game'; // ให้ชื่อฐานข้อมูลตรงกับของคุณ
 
 $conn = new mysqli($host, $user, $pass, $db);
 

@@ -219,6 +219,7 @@ function getGameProgress($conn, $user_id, $chapter_id)
         .content-wrapper {
             position: relative;
             z-index: 2;
+            
         }
 
         /* กำหนดให้เนื้อหาหลักอยู่บนสุด */

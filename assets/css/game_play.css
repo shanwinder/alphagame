@@ -1,0 +1,70 @@
+/* --- ไฟล์: assets/css/game_play.css (ไฟล์ใหม่) --- */
+body {
+    font-family: 'Kanit', sans-serif;
+    background-color: #1e293b; /* สีพื้นหลังธีมอวกาศที่ดูสบายตา */
+    color: #cbd5e1;
+
+}
+
+.game-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+             padding-top: 50px; /* เว้นที่ให้ header ที่เป็น fixed/sticky */
+}
+
+main.game-main-content {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    gap: 30px;
+}
+
+/* กล่องแสดงผลเกมหลัก */
+#game-container {
+    width: 900px;
+    height: 600px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border: 3px solid #475569;
+    background-color: #0f172a;
+}
+
+/* แผงข้อมูลภารกิจด้านข้าง */
+.hud-panel {
+    width: 320px;
+    height: 600px;
+    background-color: rgba(15, 23, 42, 0.8); /* สีโปร่งแสง */
+    border: 1px solid #475569;
+    border-radius: 10px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.hud-panel h4 {
+    color: #50e3c2; /* สีเขียว Sci-fi */
+    font-size: 1.5rem;
+    border-bottom: 2px solid #334155;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.hud-panel p {
+    font-size: 1rem;
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+/* จัดการ Modal ให้อยู่กลางหน้าจอและสวยงาม */
+.game-modal .modal-content {
+    background-color: #1e293b;
+    color: white;
+    border: 2px solid #50e3c2;
+}
+.game-modal .modal-content h2 { color: #50e3c2; }
+.game-modal .modal-content p { color: #cbd5e1; }

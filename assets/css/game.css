@@ -1,0 +1,20 @@
+/* --- ในไฟล์ assets/css/game.css --- */
+
+/* กล่องครอบ Progress Bar */
+.progress-container {
+    width: 100%;
+    background-color: #e9ecef; /* สีพื้นหลังของแถบ */
+    border-radius: 5px;
+    overflow: hidden;
+    height: 10px;
+    margin-top: 15px;
+}
+
+/* แถบ Progress Bar ที่จะเคลื่อนที่ */
+#next-progress-fill {
+    height: 100%;
+    width: 100%; /* เริ่มต้นที่เต็ม 100% */
+    background-color: #0d6efd; /* สีของแถบ */
+    border-radius: 5px;
+    transition: width 10s linear; /* หัวใจของ Animation: เปลี่ยนความกว้างใน 10 วินาที */
+}

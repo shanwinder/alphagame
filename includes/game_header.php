@@ -6,10 +6,10 @@ if (session_status() === PHP_SESSION_NONE) {
 ?>
 <div id="top-bar">
     <div class="info-text">
-        👦 ผู้เล่น: <strong><?= $_SESSION['name'] ?? 'ทดสอบ' ?></strong> |
-        🧩 เกม: <strong><?= $game_title ?? 'ไม่ระบุ' ?></strong> |
-        🧠 ด่านที่: <strong><?= $stage_id ?? 'N/A' ?></strong> |
-        🌟 คะแนนรวม: <strong id="total-score">0</strong>
+        <span>🧑‍🚀 ผู้เล่น: <strong><?= htmlspecialchars($_SESSION['name'] ?? 'ทดสอบ') ?></strong></span> |
+        <span>🧩 บทเรียน: <strong><?= htmlspecialchars($game_title ?? 'ไม่ระบุ') ?></strong></span> |
+        <span>🚩 ด่านที่: <strong><?= htmlspecialchars($stage_id ?? 'N/A') ?></strong></span> |
+        <span>🌟 คะแนนรวม: <strong id="total-score">0</strong></span>
     </div>
 
     <div class="top-bar-buttons">

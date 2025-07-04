@@ -1,105 +1,66 @@
 /* --- ไฟล์: assets/css/game_header.css (ฉบับปรับปรุงธีมอวกาศ) --- */
-
 #top-bar {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    /* ✅ ทำให้พื้นหลังโปร่งแสงและเบลอฉากหลัง เหมือนกับ student_header */
-    background: rgba(10, 25, 47, 0.85); /* สีน้ำเงินเข้มโปร่งแสง */
+    background: rgba(13, 27, 42, 0.85); /* สีพื้นหลังโปร่งแสง น้ำเงินเข้ม */
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 10px 20px;
+    -webkit-backdrop-filter: blur(10px); /* สำหรับ Safari */
+    padding: 10px 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15); /* เส้นขอบบางๆ */
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    z-index: 999;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    font-family: 'Kanit', sans-serif;
 }
 
 .info-text {
-    font-size: 0.95rem;
-    color: #e2e8f0; /* ✅ เปลี่ยนสีตัวอักษรเป็นสีขาวอมเทา */
+    font-size: 1rem;
+    color: #e2e8f0; /* สีขาวอมเทา อ่านง่าย */
+    display: flex;
+    align-items: center;
+    gap: 15px; /* เพิ่มระยะห่างระหว่างข้อความ */
 }
 
-/* ✅ ทำให้ข้อความที่เน้นเป็นสีพิเศษของธีม */
+.info-text span {
+    display: inline-flex;
+    align-items: center;
+}
+
 .info-text strong {
-    color: #50e3c2; /* สีเขียว Sci-fi */
+    color: #FFDA63; /* สีเหลืองทอง */
     font-weight: bold;
+    margin-left: 5px;
 }
 
-/* ทำให้คะแนนรวมเป็นสีพิเศษ */
 #total-score {
-    color: #f9c74f !important; /* สีเหลืองทอง */
+    color: #50e3c2 !important; /* สีเขียว Sci-fi */
     font-size: 1.1em;
 }
 
 .top-bar-buttons {
     display: flex;
-    gap: 10px;
     align-items: center;
 }
 
-.btn-dashboard,
-.btn-next-stage {
-    position: relative;
-    padding: 6px 14px;
-    font-size: 0.9rem;
+.btn-dashboard {
+    padding: 8px 18px;
+    font-size: 0.95rem;
     border-radius: 8px;
     border: none;
     text-decoration: none;
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     color: white;
-}
-
-/* ✅ ปรับสีปุ่มให้เข้ากับธีม */
-.btn-dashboard {
     background-color: #4A90E2;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-dashboard:hover {
     background-color: #357ABD;
-}
-
-.btn-next-stage {
-    background-color: #28a745;
-    color: white;
-    display: none;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.btn-next-stage:hover {
-    background-color: #218838;
-}
-
-.btn-next-stage .progress-bar-inner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.3);
-    width: 0%; /* แก้ไขจาก 100% เป็น 0% เพื่อให้ animation ทำงานถูกต้อง */
-    transition: width 10s linear; /* แก้ไขจาก 1s เป็น 10s ให้ตรงกับ JS */
-    z-index: 1;
-}
-
-.btn-next-stage .btn-text {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-@media (max-width: 576px) {
-    #top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }

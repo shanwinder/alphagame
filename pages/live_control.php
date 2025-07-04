@@ -1,7 +1,7 @@
 <?php
 // --- ไฟล์: pages/live_control.php (ไฟล์ใหม่) ---
 require_once '../includes/db.php';
-require_once '../includes/header.php'; // ใช้ header ของ Admin
+require_once '../includes/header.php';
 require_once '../includes/auth.php';
 requireAdmin();
 

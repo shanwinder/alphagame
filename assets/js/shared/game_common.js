@@ -1,8 +1,8 @@
-// --- ไฟล์: assets/js/shared/game_common.js (ฉบับสมบูรณ์) ---
+// --- ไฟล์: assets/js/shared/game_common.js (ฉบับสมบูรณ์พร้อมคำอธิบาย) ---
 
 // ฟังก์ชันสำหรับอัปเดตคะแนนรวมที่แสดงบน Game Header
 window.updateTotalScore = function () {
-    // ค้นหา element ที่ใช้แสดงคะแนนรวมจาก ID
+    // ค้นหา element ที่ใช้แสดงคะแนนรวมจาก ID 'total-score'
     const scoreEl = document.getElementById('total-score');
     // ถ้าไม่พบ element นี้ ให้จบการทำงานของฟังก์ชันทันที
     if (!scoreEl) return;
@@ -19,28 +19,32 @@ window.updateTotalScore = function () {
 };
 
 // ฟังก์ชันสำหรับแสดง Popup เมื่อผ่านด่าน
-// รับ parameter: จำนวนดาวที่ได้, สถานะว่าเป็นโหมด Live หรือไม่, และลิงก์สำหรับด่านถัดไป
+// รับ parameter: จำนวนดาวที่ได้, สถานะว่าเป็นโหมด Live, และลิงก์สำหรับด่านถัดไป
 window.showSuccessPopup = function (stars_awarded, isLive = false, nextStageLink = '#') {
-    // ค้นหา element ของ Modal, ส่วนแสดงดาว, และปุ่มไปด่านถัดไป
+    // ค้นหา element ของ Modal, ส่วนแสดงดาว, ปุ่มไปต่อ, และข้อความ
     const modal = document.getElementById('successModal');
     const starRatingDiv = document.getElementById('star-rating');
     const nextBtn = document.getElementById("nextStageBtn");
     const modalMessage = document.getElementById("modal-message");
 
-    // ตรวจสอบว่าหา element ทั้งหมดเจหรือไม่ ถ้าไม่เจอให้จบการทำงาน
-    if (!modal || !starRatingDiv || !nextBtn || !modalMessage) return;
+    // ตรวจสอบว่าหา element ทั้งหมดเจอหรือไม่ ถ้าไม่เจอให้จบการทำงาน
+    if (!modal || !starRatingDiv || !nextBtn || !modalMessage) {
+        console.error("Modal elements not found!"); // แสดง error ใน console
+        return;
+    }
 
     // ล้างดาวเก่าทิ้งก่อน
     starRatingDiv.innerHTML = '';
-    // สร้างดาวตามจำนวนที่ได้รับ
+    // สร้างดาวตามจำนวนที่ได้รับ (3 ดวง)
     for (let i = 0; i < 3; i++) {
         const star = document.createElement('span'); // สร้าง element span
         star.className = 'star-icon'; // กำหนดคลาสให้
+        // ตรวจสอบว่าดาวดวงนี้เป็นดาวที่ผู้เล่นได้รับหรือไม่
         if (i < stars_awarded) {
-            star.innerHTML = '★'; // ถ้าเป็นดาวที่ได้ ให้เป็นดาวเต็ม
+            star.innerHTML = '★'; // ถ้าใช่ ให้เป็นดาวเต็ม
             star.style.color = '#ffc107'; // กำหนดสีเหลืองทอง
         } else {
-            star.innerHTML = '☆'; // ถ้าเป็นดาวที่ไม่ได้ ให้เป็นดาวว่าง
+            star.innerHTML = '☆'; // ถ้าไม่ใช่ ให้เป็นดาวว่าง
             star.style.color = '#ccc'; // กำหนดสีเทา
         }
         starRatingDiv.appendChild(star); // นำดาวไปแสดงใน div
@@ -61,7 +65,7 @@ window.showSuccessPopup = function (stars_awarded, isLive = false, nextStageLink
     } else {
         // ถ้าเป็นโหมดเล่นคนเดียว
         // เรียกใช้ฟังก์ชันนับถอยหลังหลังจากแสดงดาวเสร็จ (หน่วงเวลาเล็กน้อย)
-        setTimeout(triggerAutoNextStage, 1000);
+        setTimeout(triggerAutoNextStage, 1500);
     }
 };
 

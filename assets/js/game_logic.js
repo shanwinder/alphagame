@@ -1,4 +1,4 @@
-// --- ไฟล์: assets/js/game_logic.js (ฉบับสมบูรณ์) ---
+// --- ไฟล์: assets/js/game_logic.js (ฉบับสมบูรณ์ล่าสุด) ---
 
 // ใช้ Class ในการสร้าง Scene ของเกม ซึ่งเป็นรูปแบบมาตรฐานของ Phaser 3
 class GameScene extends Phaser.Scene {
@@ -8,6 +8,8 @@ class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' });
         // สร้างตัวแปร 'game_over' เพื่อใช้ตรวจสอบสถานะของเกม (ป้องกันการคลิกซ้ำ)
         this.game_over = false;
+        // สร้างตัวแปรสำหรับเก็บ Interval ID ของการ Polling เพื่อให้เราสามารถหยุดมันได้ในอนาคต
+        this.livePollingInterval = null;
     }
 
     // ฟังก์ชัน preload: เป็นฟังก์ชันแรกที่จะทำงานเพื่อโหลดทรัพยากรทั้งหมดที่ต้องใช้ในเกม
@@ -30,7 +32,7 @@ class GameScene extends Phaser.Scene {
     create() {
         // เพิ่มภาพพื้นหลังเข้ามาในฉากที่ตำแหน่งกึ่งกลาง (450, 300)
         this.add.image(450, 300, 'background');
-        // เพิ่มภาพตัวละครอัลฟ่าเข้ามาในฉากที่ตำแหน่งด้านซ้ายล่าง และย่อขนาดลง 60%
+        // เพิ่มภาพตัวละครอัลฟ่าเข้ามาในฉากที่ตำแหน่งด้านซ้ายล่าง และย่อขนาดลง
         this.add.sprite(120, 480, 'alpha').setScale(0.4);
 
         // ใช้ switch-case เพื่อตรวจสอบว่าตอนนี้กำลังจะสร้างเกมของด่านไหน (CURRENT_STAGE_ID มาจากไฟล์ play.php)
@@ -103,7 +105,7 @@ class GameScene extends Phaser.Scene {
     submitScore(score) {
         // สร้าง Object FormData เพื่อเตรียมข้อมูลสำหรับส่ง
         const formData = new FormData();
-        // เพิ่ม stage_id ปัจจุบันลงในฟอร์ม
+        // เพิ่ม stage_id ปัจจุบันลงในฟอร์ม (CURRENT_STAGE_ID มาจาก play.php)
         formData.append('stage_id', CURRENT_STAGE_ID);
         // เพิ่มคะแนนที่ได้รับลงในฟอร์ม
         formData.append('score', score);
@@ -115,8 +117,13 @@ class GameScene extends Phaser.Scene {
                 // หลังจากได้รับข้อมูลตอบกลับ
                 if (data.status === 'success') {
                     // ถ้าสถานะคือ 'success'
-                    // เรียกใช้ฟังก์ชัน Popup จาก game_common.js โดยส่งจำนวนดาวที่ได้จาก API ไปด้วย
+                    // เรียกใช้ฟังก์ชัน Popup จาก game_common.js
                     window.showSuccessPopup(data.stars, IS_LIVE_SESSION, NEXT_STAGE_LINK);
+
+                    // ✅ [เพิ่ม] ตรวจสอบถ้าเป็นโหมด Live ให้เริ่ม Polling
+                    if (IS_LIVE_SESSION) {
+                        this.startLivePolling();
+                    }
                 } else {
                     // ถ้าสถานะเป็นอย่างอื่น ให้แสดงข้อความ error
                     alert('Error: ' + data.message);
@@ -129,6 +136,30 @@ class GameScene extends Phaser.Scene {
                 this.game_over = false; // ให้เล่นใหม่ได้
             });
     }
+
+    // ✅ [เพิ่ม] ฟังก์ชันใหม่สำหรับ Polling ในโหมด Live
+    startLivePolling() {
+        // แสดงข้อความใน Console เพื่อให้เรารู้ว่าฟังก์ชันนี้เริ่มทำงานแล้ว
+        console.log("Live mode: Polling for teacher's command...");
+        // สั่งให้โค้ดข้างในทำงานซ้ำทุกๆ 20 วินาที และเก็บ ID ของ interval ไว้
+        this.livePollingInterval = setInterval(() => {
+            // ส่งคำขอไปที่ API เพื่อถามสถานะล่าสุดของห้อง
+            fetch(`../api/live_status.php?code=${LIVE_SESSION_CODE}`)
+                .then(response => response.json())
+                .then(data => {
+                    // แสดงสถานะที่ได้รับใน Console
+                    console.log("Polling... Server Stage ID:", data.current_stage_id, "Current Stage ID:", CURRENT_STAGE_ID);
+                    // ตรวจสอบว่าครูได้กด "ไปด่านถัดไป" แล้วหรือยัง (โดยดูว่า ID ด่านบนเซิร์ฟเวอร์มากกว่าด่านปัจจุบันหรือไม่)
+                    if (data.current_stage_id > CURRENT_STAGE_ID) {
+                        // ถ้าใช่
+                        console.log("Teacher advanced to the next stage! Redirecting...");
+                        clearInterval(this.livePollingInterval); // หยุดการ Polling ทันที
+                        // ส่งผู้เล่นไปยังด่านถัดไป
+                        window.location.href = `play.php?stage_id=${data.current_stage_id}`;
+                    }
+                });
+        }, 20000); // 20000 milliseconds = 20 วินาที (ลดภาระเซิร์ฟเวอร์)
+    }
 }
 
 // การตั้งค่าหลักของเกม Phaser
@@ -136,6 +167,7 @@ const config = {
     type: Phaser.AUTO, // ให้ Phaser เลือกวิธีแสดงผลที่เหมาะสมที่สุด
     width: 900, // ความกว้างของเกม
     height: 600, // ความสูงของเกม
+    backgroundColor: '#ffffff', // สีพื้นหลังเริ่มต้น
     parent: 'game-container', // บอกให้เกมไปแสดงผลใน div ที่มี id="game-container"
     scene: [GameScene] // ระบุว่า Scene ที่จะใช้ในเกมนี้คือ GameScene ที่เราสร้างไว้
 };

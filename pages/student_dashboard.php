@@ -137,7 +137,7 @@ function getGameProgress($conn, $user_id, $chapter_id)
             /* ไม่ให้ภาพพื้นหลังซ้ำ */
             background-position: bottom left;
             /* จัดตำแหน่งภาพพื้นหลังที่มุมซ้ายล่าง */
-            background-size: 50%;
+            background-size: 75%;
             /* กำหนดขนาดภาพพื้นหลัง */
             z-index: 1;
             /* กำหนดลำดับการซ้อน ให้ Layer นี้อยู่หลังเนื้อหา */
@@ -386,4 +386,4 @@ function getGameProgress($conn, $user_id, $chapter_id)
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
-</html> ```
+</html> 

@@ -18,6 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result->num_rows > 0) {
             $session = $result->fetch_assoc();
             if ($session['status'] === 'waiting') {
+                // ✅ [แก้ไข] เพิ่มโค้ดส่วนนี้เพื่อบันทึกผู้เข้าร่วม
+                $user_id = $_SESSION['user_id'];
+                $session_id = $session['id'];
+                $stmt_join = $conn->prepare("INSERT INTO live_session_participants (session_id, user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id=user_id");
+                $stmt_join->bind_param("ii", $session_id, $user_id);
+                $stmt_join->execute();
+                $stmt_join->close();
+                // จบส่วนที่แก้ไข
+
                 $_SESSION['live_session_code'] = $session_code;
                 header("Location: lobby.php");
                 exit();
@@ -223,7 +232,7 @@ $conn->close();
     </div>
 
     <script>
-       document.addEventListener('DOMContentLoaded', function () { // สั่งให้โค้ดทำงานเมื่อหน้าเว็บโหลดเสร็จสมบูรณ์
+        document.addEventListener('DOMContentLoaded', function () { // สั่งให้โค้ดทำงานเมื่อหน้าเว็บโหลดเสร็จสมบูรณ์
             const starContainer = document.body; // อ้างอิงถึง element body
             const numberOfStars = 200; // กำหนดจำนวนดาวที่ต้องการ
             const starTypes = ['type1', 'type2', 'type3']; // กำหนดประเภทของดาว (ซึ่งจะอ้างอิงกับคลาสใน CSS)

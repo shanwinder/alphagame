@@ -249,6 +249,18 @@ CREATE TABLE `live_sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='ตารางสำหรับจัดการห้องเรียนแบบ Live';
 
 
+CREATE TABLE `live_session_participants` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `session_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `joined_at` TIMESTAMP NOT NULL DEFAULT current_timestamp(),
+  UNIQUE KEY `session_user_unique` (`session_id`, `user_id`),
+  FOREIGN KEY (`session_id`) REFERENCES `live_sessions`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
 --
 -- Foreign Keys for tables
 --

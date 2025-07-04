@@ -33,6 +33,11 @@ $instruction_text = $stage_data['instruction'] ?? 'ขอให้สนุก�
 
 $next_stage_id = $stage_id + 1;
 $next_stage_link = ($next_stage_id > 50) ? "student_dashboard.php" : "play.php?stage_id=" . $next_stage_id;
+
+// ✅ [เพิ่ม] ตรวจสอบว่าเป็น Live Session หรือไม่ จาก PHP Session
+$is_live_session = isset($_SESSION['live_session_code']) && !empty($_SESSION['live_session_code']);
+$live_session_code = $_SESSION['live_session_code'] ?? '';
+
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -183,6 +188,11 @@ $next_stage_link = ($next_stage_id > 50) ? "student_dashboard.php" : "play.php?s
 
     <script>
         const CURRENT_STAGE_ID = <?= $stage_id ?>;
+
+        // ✅ [เพิ่ม] ส่งค่าตัวแปรจาก PHP ไปยัง JavaScript
+        const CURRENT_STAGE_ID = <?= $stage_id ?>;
+        const IS_LIVE_SESSION = <?= json_encode($is_live_session) ?>;
+        const LIVE_SESSION_CODE = "<?= $live_session_code ?>";
     </script>
     <script src="../assets/js/shared/game_common.js"></script>
     <script src="../assets/js/stage1_logic.js"></script>

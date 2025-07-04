@@ -1,13 +1,15 @@
 <?php
-// --- ไฟล์: pages/dashboard.php (ฉบับปรับปรุง) ---
+// --- ไฟล์: pages/dashboard.php (ฉบับแก้ไขลำดับ require) ---
 
-require_once '../includes/db.php';
+// ✅ 1. เรียกใช้ Header ก่อนเสมอ เพื่อให้ session_start() ทำงานเป็นอันดับแรก
 require_once '../includes/header.php';
+
+// ✅ 2. หลังจาก Session เริ่มแล้ว จึงเรียกใช้ไฟล์ auth และตรวจสอบสิทธิ์
+require_once '../includes/db.php';
 require_once '../includes/auth.php';
 requireAdmin();
 
-// ✅ ปรับปรุง SQL Query ให้ดึงข้อมูลความคืบหน้าของนักเรียนมาด้วย
-// โดยการ LEFT JOIN กับตาราง progress และนับจำนวนด่านที่ผ่าน (stars_awarded > 0)
+// ✅ 3. โค้ดส่วนที่เหลือยังคงเหมือนเดิมทุกประการ
 $sql = "SELECT
             u.id,
             u.student_id,
@@ -51,6 +53,8 @@ $total_stages = 50; // จำนวนด่านทั้งหมดของ
     <div class="d-flex gap-2 mb-3">
         <a href="add_user.php" class="btn btn-success"><i class="fas fa-user-plus"></i> เพิ่มนักเรียน</a>
         <a href="import_students.php" class="btn btn-primary"><i class="fas fa-file-csv"></i> นำเข้านักเรียน</a>
+        <a href="system_settings.php" class="btn btn-info"><i class="fas fa-cogs"></i> ตั้งค่าระบบเกม</a>
+        <a href="create_live_session.php" class="btn btn-success"><i class="fas fa-satellite-dish"></i> สร้างห้อง Live</a>
     </div>
 
     <form method="post" action="delete_multiple_users.php" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้ที่เลือก?');">
@@ -62,7 +66,8 @@ $total_stages = 50; // จำนวนด่านทั้งหมดของ
             <th>ลำดับ</th>
             <th>ชื่อ - สกุล</th>
             <th>ชั้นเรียน</th>
-            <th style="width: 35%;">ความคืบหน้า (<?= $total_stages ?> ด่าน)</th> <th>การจัดการ</th>
+            <th style="width: 35%;">ความคืบหน้า (<?= $total_stages ?> ด่าน)</th>
+            <th>การจัดการ</th>
           </tr>
         </thead>
         <tbody>
@@ -70,9 +75,8 @@ $total_stages = 50; // จำนวนด่านทั้งหมดของ
           if ($result && $result->num_rows > 0) {
             $index = 1;
             while ($row = $result->fetch_assoc()) {
-                // ✅ คำนวณเปอร์เซ็นต์ความคืบหน้า
                 $completed_stages = (int)$row['completed_stages'];
-                $percentage = ($completed_stages / $total_stages) * 100;
+                $percentage = ($total_stages > 0) ? ($completed_stages / $total_stages) * 100 : 0;
           ?>
               <tr>
                 <td class="text-center"><input type='checkbox' name='user_ids[]' value='<?= $row['id'] ?>'></td>

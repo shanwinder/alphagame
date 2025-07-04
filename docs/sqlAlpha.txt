@@ -1,163 +1,317 @@
-\<immersive type="text/code" lang="sql" title="Final SQL Schema"\>
-\-- =================================================================
-\-- SQL Schema for "Alpha's Adventure" Online Skill-Training Game
-\-- Final Version - Compiled from all requirements
-\-- =================================================================
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Generation Time: Jul 01, 2025 at 07:00 PM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.2.4
 
-\-- ตารางที่ 1: จัดการข้อมูลผู้ใช้งาน
-\-- เก็บข้อมูลผู้ใช้งานระบบทั้งหมด ทั้งนักเรียนและผู้ดูแลระบบ
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+SET FOREIGN_KEY_CHECKS=0;
+
+--
+-- Database: `your_database_name`
+--
+
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 1: จัดการข้อมูลผู้ใช้งาน
+-- เก็บข้อมูลผู้ใช้งานระบบทั้งหมด ทั้งนักเรียนและผู้ดูแลระบบ
+--
 CREATE TABLE `users` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`student_id` VARCHAR(20) NOT NULL UNIQUE COMMENT 'รหัสนักเรียนสำหรับเข้าระบบ',
-`name` VARCHAR(100) NOT NULL COMMENT 'ชื่อ-สกุลของนักเรียน',
-`class_level` VARCHAR(10) NOT NULL COMMENT 'ระดับชั้น เช่น ป.4/1',
-`password` VARCHAR(255) NOT NULL COMMENT 'รหัสผ่านที่เข้ารหัสแล้ว',
-`role` ENUM('student', 'admin') DEFAULT 'student' COMMENT 'บทบาทผู้ใช้',
-`created_at` TIMESTAMP DEFAULT CURRENT\_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `student_id` varchar(20) NOT NULL COMMENT 'รหัสนักเรียนสำหรับเข้าระบบ',
+  `name` varchar(100) NOT NULL COMMENT 'ชื่อ-สกุลของนักเรียน',
+  `class_level` varchar(10) NOT NULL COMMENT 'ระดับชั้น เช่น ป.4/1',
+  `password` varchar(255) NOT NULL COMMENT 'รหัสผ่านที่เข้ารหัสแล้ว',
+  `role` enum('student','admin') DEFAULT 'student' COMMENT 'บทบาทผู้ใช้',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `student_id` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 2: จัดการบทเรียนหลักของเกม (Chapters)
-\-- เก็บข้อมูลบทเรียนหลักทั้ง 5 บทของเกม
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 2: จัดการบทเรียนหลักของเกม (Chapters)
+-- เก็บข้อมูลบทเรียนหลักทั้ง 5 บทของเกม
+--
 CREATE TABLE `chapters` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`chapter_number` INT NOT NULL UNIQUE COMMENT 'ลำดับของบทเรียน เช่น 1, 2, 3',
-`title` VARCHAR(255) NOT NULL COMMENT 'ชื่อบทเรียน เช่น การเอาชีวิตรอด ณ จุดตก',
-`description` TEXT COMMENT 'คำอธิบายภาพรวมของบทเรียน',
-`created_at` TIMESTAMP DEFAULT CURRENT\_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `chapter_number` int(11) NOT NULL COMMENT 'ลำดับของบทเรียน เช่น 1, 2, 3',
+  `title` varchar(255) NOT NULL COMMENT 'ชื่อบทเรียน เช่น การเอาชีวิตรอด ณ จุดตก',
+  `description` text DEFAULT NULL COMMENT 'คำอธิบายภาพรวมของบทเรียน',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `chapter_number` (`chapter_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 3: จัดการด่านย่อยในแต่ละบท (Stages)
-\-- เก็บข้อมูลด่านย่อยทั้ง 50 ด่านของเกม
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 3: จัดการด่านย่อยในแต่ละบท (Stages)
+-- เก็บข้อมูลด่านย่อยทั้ง 50 ด่านของเกม
+--
 CREATE TABLE `stages` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`chapter_id` INT NOT NULL COMMENT 'เชื่อมโยงไปยังบทเรียน (FK to chapters.id)',
-`stage_number` INT NOT NULL COMMENT 'ลำดับของด่านในบทนั้นๆ (เช่น ด่านที่ 1-50)',
-`title` VARCHAR(255) COMMENT 'ชื่อด่าน เช่น ประกอบร่างให้อัลฟ่า',
-`instruction` TEXT COMMENT 'คำสั่งหรือเป้าหมายของด่าน',
-`content_json` JSON COMMENT 'เก็บข้อมูลเฉพาะของด่าน เช่น ตำแหน่งของวัตถุ, คำถาม',
-FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `chapter_id` int(11) NOT NULL COMMENT 'เชื่อมโยงไปยังบทเรียน (FK to chapters.id)',
+  `stage_number` int(11) NOT NULL COMMENT 'ลำดับของด่านในบทนั้นๆ (เช่น ด่านที่ 1-50)',
+  `title` varchar(255) DEFAULT NULL COMMENT 'ชื่อด่าน เช่น ประกอบร่างให้อัลฟ่า',
+  `instruction` text DEFAULT NULL COMMENT 'คำสั่งหรือเป้าหมายของด่าน',
+  `content_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'เก็บข้อมูลเฉพาะของด่าน เช่น ตำแหน่งของวัตถุ, คำถาม' CHECK (json_valid(`content_json`)),
+  PRIMARY KEY (`id`),
+  KEY `chapter_id` (`chapter_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 4: บันทึกความก้าวหน้าการเล่น (Progress)
-\-- บันทึกผลลัพธ์และความก้าวหน้าการเล่นแต่ละด่านของผู้เรียน
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 4: บันทึกความก้าวหน้าการเล่น (Progress)
+-- บันทึกผลลัพธ์และความก้าวหน้าการเล่นแต่ละด่านของผู้เรียน
+--
 CREATE TABLE `progress` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`user_id` INT NOT NULL,
-`stage_id` INT NOT NULL,
-`stars_awarded` TINYINT DEFAULT 0 COMMENT 'จำนวนดาวที่ได้รับ (0-3 ดาว) สะท้อนผลการเรียนรู้',
-`is_efficiency_goal_met` BOOLEAN DEFAULT 0 COMMENT 'บรรลุเป้าหมายด้านประสิทธิภาพหรือไม่ (สำหรับดาวดวงที่ 2)',
-`is_exploratory_goal_met` BOOLEAN DEFAULT 0 COMMENT 'บรรลุเป้าหมายการสำรวจหรือไม่ (สำหรับดาวดวงที่ 3)',
-`duration_seconds` INT DEFAULT 0 COMMENT 'ระยะเวลาที่ใช้ในการผ่านด่าน (วินาที)',
-`attempts` INT DEFAULT 1 COMMENT 'จำนวนครั้งที่ลองเล่นด่านนี้',
-`completed_at` DATETIME COMMENT 'เวลาที่ผ่านด่านสำเร็จ',
-UNIQUE KEY `user_stage_unique` (`user_id`, `stage_id`),
-FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-FOREIGN KEY (`stage_id`) REFERENCES `stages`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `stage_id` int(11) NOT NULL,
+  `stars_awarded` tinyint(4) DEFAULT 0 COMMENT 'จำนวนดาวที่ได้รับ (0-3 ดาว) สะท้อนผลการเรียนรู้',
+  `is_efficiency_goal_met` tinyint(1) DEFAULT 0 COMMENT 'บรรลุเป้าหมายด้านประสิทธิภาพหรือไม่ (สำหรับดาวดวงที่ 2)',
+  `is_exploratory_goal_met` tinyint(1) DEFAULT 0 COMMENT 'บรรลุเป้าหมายการสำรวจหรือไม่ (สำหรับดาวดวงที่ 3)',
+  `duration_seconds` int(11) DEFAULT 0 COMMENT 'ระยะเวลาที่ใช้ในการผ่านด่าน (วินาที)',
+  `attempts` int(11) DEFAULT 1 COMMENT 'จำนวนครั้งที่ลองเล่นด่านนี้',
+  `completed_at` datetime DEFAULT NULL COMMENT 'เวลาที่ผ่านด่านสำเร็จ',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_stage_unique` (`user_id`,`stage_id`),
+  KEY `stage_id` (`stage_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 5: บันทึกพฤติกรรมการเล่น (Game Logs)
-\-- บันทึกพฤติกรรมการเล่นทุกอย่างของผู้เรียนเพื่อการวิเคราะห์เชิงลึก (Learning Analytics)
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 5: บันทึกพฤติกรรมการเล่น (Game Logs)
+-- บันทึกพฤติกรรมการเล่นทุกอย่างของผู้เรียนเพื่อการวิเคราะห์เชิงลึก (Learning Analytics)
+--
 CREATE TABLE `game_logs` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`user_id` INT NOT NULL,
-`stage_id` INT NOT NULL,
-`action` ENUM('start', 'submit', 'hint', 'pass', 'fail') NOT NULL COMMENT 'ประเภทของพฤติกรรมที่บันทึก',
-`detail` TEXT COMMENT 'รายละเอียดเพิ่มเติม เช่น คำตอบที่ส่ง',
-`logged_at` TIMESTAMP DEFAULT CURRENT\_TIMESTAMP,
-FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-FOREIGN KEY (`stage_id`) REFERENCES `stages`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `stage_id` int(11) NOT NULL,
+  `action` enum('start','submit','hint','pass','fail') NOT NULL COMMENT 'ประเภทของพฤติกรรมที่บันทึก',
+  `detail` text DEFAULT NULL COMMENT 'รายละเอียดเพิ่มเติม เช่น คำตอบที่ส่ง',
+  `logged_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `stage_id` (`stage_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 6: จัดการไอเทมสำหรับปรับแต่งตัวละคร (Customization Items)
-\-- เก็บรายการไอเทมสำหรับตกแต่งตัวละคร Alpha และเงื่อนไขการปลดล็อกทั้งหมด
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 6: จัดการไอเทมสำหรับปรับแต่งตัวละคร (Customization Items)
+-- เก็บรายการไอเทมสำหรับตกแต่งตัวละคร Alpha และเงื่อนไขการปลดล็อกทั้งหมด
+--
 CREATE TABLE `customization_items` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`item_name` VARCHAR(100) NOT NULL COMMENT 'ชื่อไอเทม เช่น สีล้อสีแดง, เสาอากาศแบบสายฟ้า',
-`item_type` ENUM('wheel\_color', 'antenna', 'sticker', 'expression') NOT NULL COMMENT 'ประเภทของไอเทม',
-`description` TEXT,
-`image_url` VARCHAR(255) COMMENT 'ตำแหน่งไฟล์ภาพของไอเทม',
-`milestone_stage_id` INT NOT NULL COMMENT 'ID ของด่านที่เป็นเงื่อนไขการปลดล็อก (FK to stages.id)',
-`required_cumulative_stars` INT NOT NULL DEFAULT 0 COMMENT 'จำนวนดาวสะสมขั้นต่ำที่ต้องมีเพื่อปลดล็อกไอเทมนี้',
-FOREIGN KEY (`milestone_stage_id`) REFERENCES `stages`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `item_name` varchar(100) NOT NULL COMMENT 'ชื่อไอเทม เช่น สีล้อสีแดง, เสาอากาศแบบสายฟ้า',
+  `item_type` enum('wheel_color','antenna','sticker','expression') NOT NULL COMMENT 'ประเภทของไอเทม',
+  `description` text DEFAULT NULL,
+  `image_url` varchar(255) DEFAULT NULL COMMENT 'ตำแหน่งไฟล์ภาพของไอเทม',
+  `milestone_stage_id` int(11) NOT NULL COMMENT 'ID ของด่านที่เป็นเงื่อนไขการปลดล็อก (FK to stages.id)',
+  `required_cumulative_stars` int(11) NOT NULL DEFAULT 0 COMMENT 'จำนวนดาวสะสมขั้นต่ำที่ต้องมีเพื่อปลดล็อกไอเทมนี้',
+  PRIMARY KEY (`id`),
+  KEY `milestone_stage_id` (`milestone_stage_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 7: บันทึกไอเทมที่ผู้เล่นปลดล็อก (User Unlocked Items)
-\-- บันทึกว่าผู้เล่นคนไหนปลดล็อกไอเทมอะไรไปแล้วบ้าง
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 7: บันทึกไอเทมที่ผู้เล่นปลดล็อก (User Unlocked Items)
+-- บันทึกว่าผู้เล่นคนไหนปลดล็อกไอเทมอะไรไปแล้วบ้าง
+--
 CREATE TABLE `user_unlocked_items` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`user_id` INT NOT NULL,
-`item_id` INT NOT NULL,
-`unlocked_at` TIMESTAMP DEFAULT CURRENT\_TIMESTAMP,
-UNIQUE KEY `user_item_unique` (`user_id`, `item_id`),
-FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-FOREIGN KEY (`item_id`) REFERENCES `customization_items`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `unlocked_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_item_unique` (`user_id`,`item_id`),
+  KEY `item_id` (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- =================================================================
-\-- ตารางสำหรับระบบแบบทดสอบ (Pre-test/Post-test)
-\-- =================================================================
+-- --------------------------------------------------------
 
-\-- ตารางที่ 8: กำหนดชุดแบบทดสอบ
+--
+-- ตารางที่ 8: กำหนดชุดแบบทดสอบ
+--
 CREATE TABLE `assessments` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`title` VARCHAR(255) NOT NULL,
-`description` TEXT COMMENT 'คำอธิบายเพิ่มเติมเกี่ยวกับแบบทดสอบนี้',
-`type` ENUM('pre-test', 'post-test', 'quiz') NOT NULL COMMENT 'ประเภทของแบบทดสอบ',
-`created_at` TIMESTAMP DEFAULT CURRENT\_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL COMMENT 'คำอธิบายเพิ่มเติมเกี่ยวกับแบบทดสอบนี้',
+  `type` enum('pre-test','post-test','quiz') NOT NULL COMMENT 'ประเภทของแบบทดสอบ',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 9: คลังคำถามของแบบทดสอบ
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 9: คลังคำถามของแบบทดสอบ
+--
 CREATE TABLE `assessment_questions` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`assessment_id` INT NOT NULL,
-`question_number` INT NOT NULL COMMENT 'ลำดับของคำถามในชุดทดสอบ',
-`question_type` ENUM('multiple\_choice', 'ordering', 'fill\_in\_the\_blank') NOT NULL,
-`question_text` TEXT,
-`question_data_json` JSON COMMENT 'เก็บข้อมูลเพิ่มเติม เช่น รูปภาพประกอบ หรือชุดคำสำหรับเรียงลำดับ',
-`options_json` JSON COMMENT 'เก็บตัวเลือกสำหรับคำถามแบบ multiple\_choice',
-`correct_answer_json` JSON NOT NULL COMMENT 'เก็บคำตอบที่ถูกต้องในรูปแบบ JSON เพื่อรองรับหลายคำตอบหรือการเรียงลำดับ',
-`points` INT DEFAULT 1 COMMENT 'คะแนนสำหรับคำถามข้อนี้',
-FOREIGN KEY (`assessment_id`) REFERENCES `assessments`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `assessment_id` int(11) NOT NULL,
+  `question_number` int(11) NOT NULL COMMENT 'ลำดับของคำถามในชุดทดสอบ',
+  `question_type` enum('multiple_choice','ordering','fill_in_the_blank') NOT NULL,
+  `question_text` text DEFAULT NULL,
+  `question_data_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'เก็บข้อมูลเพิ่มเติม เช่น รูปภาพประกอบ หรือชุดคำสำหรับเรียงลำดับ' CHECK (json_valid(`question_data_json`)),
+  `options_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'เก็บตัวเลือกสำหรับคำถามแบบ multiple_choice' CHECK (json_valid(`options_json`)),
+  `correct_answer_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'เก็บคำตอบที่ถูกต้องในรูปแบบ JSON เพื่อรองรับหลายคำตอบหรือการเรียงลำดับ' CHECK (json_valid(`correct_answer_json`)),
+  `points` int(11) DEFAULT 1 COMMENT 'คะแนนสำหรับคำถามข้อนี้',
+  PRIMARY KEY (`id`),
+  KEY `assessment_id` (`assessment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 10: ผลการทำแบบทดสอบ
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 10: ผลการทำแบบทดสอบ
+--
 CREATE TABLE `assessment_results` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`user_id` INT NOT NULL,
-`assessment_id` INT NOT NULL,
-`score` INT NOT NULL,
-`max_score` INT NOT NULL COMMENT 'คะแนนเต็มของแบบทดสอบชุดนั้น',
-`submitted_at` TIMESTAMP DEFAULT CURRENT\_TIMESTAMP,
-UNIQUE KEY `user_assessment_unique` (`user_id`, `assessment_id`),
-FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-FOREIGN KEY (`assessment_id`) REFERENCES `assessments`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `assessment_id` int(11) NOT NULL,
+  `score` int(11) NOT NULL,
+  `max_score` int(11) NOT NULL COMMENT 'คะแนนเต็มของแบบทดสอบชุดนั้น',
+  `submitted_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_assessment_unique` (`user_id`,`assessment_id`),
+  KEY `assessment_id` (`assessment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- ตารางที่ 11: คำตอบรายข้อของนักเรียน
+-- --------------------------------------------------------
+
+--
+-- ตารางที่ 11: คำตอบรายข้อของนักเรียน
+--
 CREATE TABLE `student_assessment_answers` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`result_id` INT NOT NULL COMMENT 'เชื่อมโยงไปยัง id ของการทำแบบทดสอบครั้งนั้นๆ',
-`question_id` INT NOT NULL,
-`answer_given_json` JSON NOT NULL COMMENT 'คำตอบที่นักเรียนตอบ',
-`is_correct` BOOLEAN NOT NULL COMMENT 'เก็บผลว่าข้อนี้ตอบถูก (1) หรือผิด (0)',
-FOREIGN KEY (`result_id`) REFERENCES `assessment_results`(`id`) ON DELETE CASCADE,
-FOREIGN KEY (`question_id`) REFERENCES `assessment_questions`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `result_id` int(11) NOT NULL COMMENT 'เชื่อมโยงไปยัง id ของการทำแบบทดสอบครั้งนั้นๆ',
+  `question_id` int(11) NOT NULL,
+  `answer_given_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'คำตอบที่นักเรียนตอบ' CHECK (json_valid(`answer_given_json`)),
+  `is_correct` tinyint(1) NOT NULL COMMENT 'เก็บผลว่าข้อนี้ตอบถูก (1) หรือผิด (0)',
+  PRIMARY KEY (`id`),
+  KEY `result_id` (`result_id`),
+  KEY `question_id` (`question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-\-- =================================================================
-\-- ตารางสำหรับเก็บ Feedback (ส่วนเสริม)
-\-- =================================================================
+-- --------------------------------------------------------
 
-\-- ตารางที่ 12: ความคิดเห็นของนักเรียน
+--
+-- ตารางที่ 12: ความคิดเห็นของนักเรียน
+--
 CREATE TABLE `student_feedback` (
-`id` INT AUTO\_INCREMENT PRIMARY KEY,
-`user_id` INT NOT NULL,
-`chapter_id` INT COMMENT 'อาจจะให้ feedback หลังจบเกม/บทเรียน',
-`stage_id` INT COMMENT 'หรือจะให้ feedback หลังจบด่าน',
-`rating` TINYINT NOT NULL COMMENT 'เช่น 1-5 ดาว',
-`comment` TEXT,
-`created_at` TIMESTAMP DEFAULT CURRENT\_TIMESTAMP,
-FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `chapter_id` int(11) DEFAULT NULL COMMENT 'อาจจะให้ feedback หลังจบเกม/บทเรียน',
+  `stage_id` int(11) DEFAULT NULL COMMENT 'หรือจะให้ feedback หลังจบด่าน',
+  `rating` tinyint(4) NOT NULL COMMENT 'เช่น 1-5 ดาว',
+  `comment` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+CREATE TABLE `system_settings` (
+  `setting_key` VARCHAR(50) NOT NULL PRIMARY KEY,
+  `setting_value` TEXT,
+  `description` VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-\</immersive\>
+INSERT INTO `system_settings` (`setting_key`, `setting_value`, `description`) VALUES
+('system_status', 'closed', 'สถานะระบบ: open, closed, homework'),
+('homework_start_time', NULL, 'เวลาเริ่มโหมดการบ้าน'),
+('homework_end_time', NULL, 'เวลาสิ้นสุดโหมดการบ้าน');
+
+
+CREATE TABLE `live_sessions` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `session_code` VARCHAR(10) NOT NULL UNIQUE COMMENT 'รหัสสำหรับเข้าห้อง Live',
+  `admin_id` INT NOT NULL COMMENT 'ID ของครูผู้สร้างเซสชั่น',
+  `current_stage_id` INT DEFAULT NULL COMMENT 'ID ของด่านที่กำลังเล่นอยู่',
+  `status` ENUM('waiting', 'active', 'paused', 'finished') NOT NULL DEFAULT 'waiting' COMMENT 'สถานะของเซสชั่น',
+  `created_at` TIMESTAMP NOT NULL DEFAULT current_timestamp(),
+  `updated_at` TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  FOREIGN KEY (`admin_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`current_stage_id`) REFERENCES `stages`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='ตารางสำหรับจัดการห้องเรียนแบบ Live';
+
+
+--
+-- Foreign Keys for tables
+--
+
+--
+-- Constraints for table `stages`
+--
+ALTER TABLE `stages`
+  ADD CONSTRAINT `stages_ibfk_1` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `progress`
+--
+ALTER TABLE `progress`
+  ADD CONSTRAINT `progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `progress_ibfk_2` FOREIGN KEY (`stage_id`) REFERENCES `stages` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `game_logs`
+--
+ALTER TABLE `game_logs`
+  ADD CONSTRAINT `game_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `game_logs_ibfk_2` FOREIGN KEY (`stage_id`) REFERENCES `stages` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `customization_items`
+--
+ALTER TABLE `customization_items`
+  ADD CONSTRAINT `customization_items_ibfk_1` FOREIGN KEY (`milestone_stage_id`) REFERENCES `stages` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_unlocked_items`
+--
+ALTER TABLE `user_unlocked_items`
+  ADD CONSTRAINT `user_unlocked_items_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_unlocked_items_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `customization_items` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `assessment_questions`
+--
+ALTER TABLE `assessment_questions`
+  ADD CONSTRAINT `assessment_questions_ibfk_1` FOREIGN KEY (`assessment_id`) REFERENCES `assessments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `assessment_results`
+--
+ALTER TABLE `assessment_results`
+  ADD CONSTRAINT `assessment_results_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `assessment_results_ibfk_2` FOREIGN KEY (`assessment_id`) REFERENCES `assessments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_assessment_answers`
+--
+ALTER TABLE `student_assessment_answers`
+  ADD CONSTRAINT `student_assessment_answers_ibfk_1` FOREIGN KEY (`result_id`) REFERENCES `assessment_results` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `student_assessment_answers_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `assessment_questions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_feedback`
+--
+ALTER TABLE `student_feedback`
+  ADD CONSTRAINT `student_feedback_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+
+SET FOREIGN_KEY_CHECKS=1;
+COMMIT;

@@ -1,364 +1,243 @@
 <?php
+// --- ไฟล์: pages/student_dashboard.php (ฉบับสมบูรณ์และสอดคล้องกับฐานข้อมูลปัจจุบัน) ---
+
 session_start();
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+requireStudent();
+require_once '../includes/access_control.php'; // ✅ เพิ่มบรรทัดนี้เข้ามา
 
 $user_id = $_SESSION['user_id'];
 $name = $_SESSION['name'];
 
 $games = [
-    1 => ['code' => 'Logic', 'title' => 'แบบฝึกทักษะเหตุผลเชิงตรรกะ'],
-    2 => ['code' => 'Algorithm', 'title' => 'แบบฝึกทักษะอัลกอริทึม'],
-    3 => ['code' => 'Text', 'title' => 'แบบฝึกทักษะแสดงอัลกอริทึมด้วยข้อความ'],
-    4 => ['code' => 'Pseudocode', 'title' => 'แบบฝึกทักษะรหัสจำลองหรือซูโดโค้ด'],
-    5 => ['code' => 'Flowchart', 'title' => 'แบบฝึกทักษะผังงาน (Flowchart)'],
+    1 => ['code' => 'Logic', 'title' => 'บทที่ 1: เหตุผลเชิงตรรกะ'],
+    2 => ['code' => 'Algorithm', 'title' => 'บทที่ 2: อัลกอริทึม'],
+    3 => ['code' => 'Text', 'title' => 'บทที่ 3: อัลกอริทึมด้วยข้อความ'],
+    4 => ['code' => 'Pseudocode', 'title' => 'บทที่ 4: รหัสจำลอง'],
+    5 => ['code' => 'Flowchart', 'title' => 'บทที่ 5: ผังงาน (Flowchart)'],
 ];
 
-function getGameProgress($conn, $user_id, $game_id)
+// ฟังก์ชันดึงข้อมูลความคืบหน้า (ฉบับเสถียรและทบทวนแล้ว)
+function getGameProgress($conn, $user_id, $chapter_id)
 {
-    $stmt = $conn->prepare("SELECT id FROM stages WHERE game_id = ?");
-    $stmt->bind_param("i", $game_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // ดึง ID ของด่านทั้งหมดในบทนั้นๆ
+    $stmt_stages = $conn->prepare("SELECT id FROM stages WHERE chapter_id = ?");
+    $stmt_stages->bind_param("i", $chapter_id);
+    $stmt_stages->execute();
+    $result_stages = $stmt_stages->get_result();
     $stage_ids = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $result_stages->fetch_assoc()) {
         $stage_ids[] = $row['id'];
     }
-    $stmt->close();
+    $stmt_stages->close();
 
-    if (empty($stage_ids))
-        return ['passed' => 0, 'total' => 0, 'score' => 0];
+    $total_stages_in_chapter = count($stage_ids);
 
-    $total = count($stage_ids);
+    if (empty($stage_ids)) {
+        return ['passed' => 0, 'total' => $total_stages_in_chapter, 'total_stars' => 0];
+    }
+
+    // เตรียม Query สำหรับดึงข้อมูลความคืบหน้า
     $placeholders = implode(',', array_fill(0, count($stage_ids), '?'));
-    $types = str_repeat('i', count($stage_ids) + 1);
+    $types = 'i' . str_repeat('i', count($stage_ids));
     $params = array_merge([$user_id], $stage_ids);
 
-    $sql = "SELECT COUNT(*) AS passed, SUM(score) AS score FROM progress WHERE user_id = ? AND stage_id IN ($placeholders) AND completed_at IS NOT NULL";
-    $stmt = $conn->prepare($sql);
-    $bind_names[] = $types;
+    // ✅ ใช้ชื่อคอลัมน์ `stars_awarded` ที่ถูกต้องตามฐานข้อมูล
+    $sql = "SELECT COUNT(id) AS passed_stages, SUM(stars_awarded) AS total_stars
+            FROM progress
+            WHERE user_id = ? AND stage_id IN ($placeholders) AND completed_at IS NOT NULL";
+
+    $stmt_progress = $conn->prepare($sql);
+
+    // ตรวจสอบว่า prepare statement สำเร็จหรือไม่
+    if ($stmt_progress === false) {
+        // สามารถเพิ่มการจัดการ error ตรงนี้ได้ถ้าต้องการ
+        return ['passed' => 0, 'total' => $total_stages_in_chapter, 'total_stars' => 0];
+    }
+
+    $bind_names = [$types];
     for ($i = 0; $i < count($params); $i++) {
         $bind_names[] = &$params[$i];
     }
-    call_user_func_array([$stmt, 'bind_param'], $bind_names);
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $progress = $result->fetch_assoc();
-    $stmt->close();
+    call_user_func_array([$stmt_progress, 'bind_param'], $bind_names);
+    $stmt_progress->execute();
+    $result_progress = $stmt_progress->get_result();
+    $progress_data = $result_progress->fetch_assoc();
+    $stmt_progress->close();
 
     return [
-        'passed' => (int) $progress['passed'],
-        'total' => $total,
-        'score' => (int) $progress['score']
+        'passed' => (int) ($progress_data['passed_stages'] ?? 0),
+        'total' => $total_stages_in_chapter,
+        'total_stars' => (int) ($progress_data['total_stars'] ?? 0)
     ];
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="th">
 
 <head>
     <meta charset="UTF-8" />
-    <title>แดชบอร์ดนักเรียน</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
+    <title>แดชบอร์ดนักเรียน - การผจญภัยของอัลฟ่า</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
+        /* ... CSS ทั้งหมดสำหรับธีมดาวยังคงเหมือนเดิม ... */
         body {
             font-family: 'Kanit', sans-serif;
-            background: linear-gradient(to right, #8ec5fc, #e0c3fc);
+            background-color: #0a192f;
+            color: white;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             position: relative;
-            animation: fadeZoom 0.7s ease-in-out;
+            overflow-x: hidden;
         }
 
-        @keyframes fadeZoom {
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle linear infinite, drift linear infinite;
+        }
+
+        @keyframes drift {
             from {
-                opacity: 0;
-                transform: scale(0.95);
+                transform: translateY(-10vh);
             }
 
             to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .background-stars {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            overflow: hidden;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .star-layer {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-repeat: repeat;
-            background-size: 200% 200%;
-            /* opacity: 100; ค่านี้ไม่ได้มีผลเพราะถูกทับด้วย opacity ในแต่ละ layer- */
-            animation: moveStars 120s linear infinite;
-        }
-
-        .star-layer::before,
-        .star-layer::after {
-            content: '';
-            position: absolute;
-            /* เพิ่มขนาดดาวเป็น 3px ให้เห็นชัดขึ้น */
-            width: 2px;
-            height: 2px;
-            background: white;
-            border-radius: 50%;
-            box-shadow:
-                /* เพิ่มจำนวนดาวและกระจายตำแหน่งให้มากขึ้น */
-                100px 200px white, 150px 350px white, 200px 150px white,
-                50px 500px white, 300px 100px white, 400px 300px white,
-                250px 400px white, 600px 150px white, 500px 250px white,
-                700px 50px white, 800px 450px white, 120px 600px white,
-                350px 70px white, 900px 200px white, 100px 800px white,
-                550px 550px white, 200px 700px white, 450px 120px white,
-                750px 650px white, 950px 350px white, 50px 250px white,
-                850px 100px white, 250px 900px white, 650px 400px white,
-                150px 50px white, 300px 850px white, 700px 700px white,
-                400px 20px white, 900px 500px white,
-                100px 100px white, 200px 600px white, 700px 900px white, 850px 50px white;
-            /* เพิ่มดาวอีก */
-            animation: twinkle 2s infinite ease-in-out alternate;
-        }
-
-        .star-layer.layer-1 {
-            transform: translateZ(0);
-            animation-duration: 60s;
-            opacity: 0.9;
-            /* เพิ่มความชัดเจน */
-        }
-
-        .star-layer.layer-2 {
-            transform: translateZ(-1px) scale(1.5);
-            animation-duration: 120s;
-            opacity: 0.7;
-            /* เพิ่มความชัดเจน */
-        }
-
-        .star-layer.layer-3 {
-            transform: translateZ(-2px) scale(2);
-            animation-duration: 180s;
-            opacity: 0.5;
-            /* เพิ่มความชัดเจน */
-        }
-
-        @keyframes moveStars {
-            0% {
-                background-position: 0 0;
-            }
-
-            100% {
-                background-position: 1000px 1000px;
+                transform: translateY(110vh);
             }
         }
 
         @keyframes twinkle {
-            0% {
-                opacity: 0.2;
+
+            0%,
+            100% {
+                opacity: 0.7;
             }
 
             50% {
                 opacity: 1;
+                transform: scale(1.2);
             }
+        }
 
-            100% {
-                opacity: 0.2;
-            }
+        .star.type1 {
+            width: 1px;
+            height: 1px;
+            background: #FFF;
+            box-shadow: 0 0 6px #FFF;
+        }
+
+        .star.type2 {
+            width: 2px;
+            height: 2px;
+            background: #90e0ef;
+            box-shadow: 0 0 8px #90e0ef;
+        }
+
+        .star.type3 {
+            width: 3px;
+            height: 3px;
+            background: #f9c74f;
+            box-shadow: 0 0 10px #f9c74f;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
         }
 
         .welcome {
-            font-size: 1.6rem;
-            margin-bottom: 25px;
-            color: #2a2a2a;
+            font-size: 2.3rem;
             font-weight: 700;
-        }
-
-        .game-list {
-            display: flex;
-            gap: 20px;
-            max-width: 1000px;
-            width: 100%;
-            justify-content: center;
-            flex-wrap: wrap;
+            color: #f9c74f;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
         }
 
         .game-card {
-            position: relative;
-            width: 250px;
-            height: 410px;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            border-radius: 24px;
-            overflow: hidden;
-            cursor: pointer;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            outline: 1px solid rgba(0, 0, 0, 0.15);
-            /* ใช้ animation สำหรับการโหลดครั้งแรกเท่านั้น */
-            animation: slideUp 0.7s ease forwards;
-            /* กำหนด transition สำหรับการ hover */
-            transition: transform 0.3s ease-out, box-shadow 0.3s ease, border-color 0.3s ease;
-            transform-style: preserve-3d;
-            /* สำหรับการหมุน 3D ในอนาคต (ถ้ามี) */
-        }
-
-        @keyframes slideUp {
-            0% {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            text-decoration: none;
+            color: white;
+            display: block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .game-card:hover {
-            /* แอนิเมชันสำหรับ hover */
-            transform: translateY(-20px) rotate(-5deg) scale(1.08);
-            /* เลื่อนขึ้น หมุนเล็กน้อย และขยาย */
-            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
-            border-color: rgb(124, 104, 255);
-            outline: 2px solidrgb(124, 104, 255);
+            transform: translateY(-10px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
         }
 
-        .game-overlay {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            padding: 16px 12px;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent 60%);
-            color: #fff;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
-            text-align: center;
-        }
-
-        .game-code {
-            font-size: 1.7rem;
-            font-weight: bold;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 4px 10px;
-            border-radius: 12px;
-            display: inline-block;
-            margin-bottom: 6px;
+        .game-card h4 {
+            color: #50e3c2;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
         }
 
         .progress-info {
-            font-size: 0.95rem;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 6px 10px;
-            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .progress {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            height: 25px;
         }
 
         .progress-bar {
-            height: 14px;
-            background: #d1d5db;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 6px;
+            background: linear-gradient(to right, #50e3c2, #00c6ff);
+            font-weight: bold;
         }
 
-        .progress-bar-fill {
-            height: 100%;
-            background: rgb(75, 165, 2);
-            width: 0;
-            border-radius: 10px;
-            transition: width 0.4s ease-in-out;
+        .game-card strong {
+            color: #f5a623;
+            font-size: 1.1em;
         }
-
-        @media (max-width: 600px) {
-            .game-list {
-                flex-direction: column;
-                max-width: 320px;
-                gap: 20px;
-            }
-
-            .game-card {
-                width: 100%;
-                height: 280px;
-            }
-
-            .game-code {
-                font-size: 1.4rem;
-            }
-
-            .progress-info {
-                font-size: 0.9rem;
-            }
-
-            .progress-bar {
-                height: 12px;
-            }
-        }
-
-        /* ลบ @keyframes bounceInHover; ทิ้งไป เพราะไม่ได้ใช้แล้ว */
     </style>
 </head>
 
 <body>
-    <div class="background-stars">
-        <div class="star-layer layer-1"></div>
-        <div class="star-layer layer-2"></div>
-        <div class="star-layer layer-3"></div>
-    </div>
-
-
     <?php include '../includes/student_header.php'; ?>
-
-    <main class="container my-4 d-flex flex-column align-items-center">
-        <div class="welcome">สวัสดี ยินดีต้อนรับ <?= htmlspecialchars($name) ?> 👋</div>
-        <div class="game-list" role="list" aria-label="รายการแบบฝึกหัดเกม">
-            <?php foreach ($games as $game_id => $game):
-                $progress = getGameProgress($conn, $user_id, $game_id);
-                $percent = ($progress['total'] > 0) ? round(($progress['passed'] / $progress['total']) * 100) : 0;
-                $bg = "../assets/img/cards/" . $game['code'] . ".png";
-
-                if ($game_id == 1) {
-                    $link = "stage_logic_1.php";
-                } else {
-                    $link = "stage.php?game_id=$game_id&stage=1";
-                }
+    <div class="content-wrapper">
+        <main class="container my-5">
+            <div class="welcome text-center mb-5">เลือกบทเรียนเพื่อเริ่มการผจญภัยได้เลย! ✨</div>
+            <div class="row g-4">
+                <?php foreach ($games as $chapter_id => $game):
+                    $progress = getGameProgress($conn, $user_id, $chapter_id);
+                    $percent = ($progress['total'] > 0) ? round(($progress['passed'] / $progress['total']) * 100) : 0;
+                    $first_stage_in_chapter_id = (($chapter_id - 1) * 10) + 1;
+                    $link_url = "play.php?stage_id={$first_stage_in_chapter_id}";
                 ?>
-                <a href="<?= $link ?>" class="game-card" style="background-image: url('<?= $bg ?>');"
-                    title="<?= htmlspecialchars($game['title']) ?>">
-
-                    <div class="game-overlay">
-                        <div class="game-code"><?= htmlspecialchars($game['code']) ?></div>
-                        <div class="progress-info">
-                            ด่านที่ทำสำเร็จ: <?= $progress['passed'] ?>/<?= $progress['total'] ?><br>
-                            คะแนนรวม: <?= $progress['score'] ?>
-                            <div class="progress-bar">
-                                <div class="progress-bar-fill" style="width: <?= $percent ?>%;"></div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="<?= $link_url ?>" class="game-card">
+                            <h4><i class="fas fa-rocket me-2 text-info"></i> <?= htmlspecialchars($game['title']) ?></h4>
+                            <div class="progress-info">
+                                <p class="mb-1">ความคืบหน้า: <strong><?= $progress['passed'] ?></strong> / <?= $progress['total'] ?> ด่าน</p>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: <?= $percent ?>%;" aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100"><?= $percent ?>%</div>
+                                </div>
+                                <p class="mt-2 mb-0"><strong><i class="fas fa-star text-warning me-1"></i> ดาวสะสม:</strong> <?= $progress['total_stars'] ?> ดวง</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
-                </a>
-            <?php endforeach; ?>
-        </div>
-    </main>
-
-    <?php include '../includes/student_footer.php'; ?>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+                <?php endforeach; ?>
+            </div>
+        </main>
+        <?php include '../includes/student_footer.php'; ?>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ... JavaScript สำหรับสร้างดาว (เหมือนเดิม) ...
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

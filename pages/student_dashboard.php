@@ -2,9 +2,13 @@
 // --- ไฟล์: pages/student_dashboard.php (ฉบับสมบูรณ์ล่าสุด) ---
 
 session_start();
+// 1. เรียกใช้ไฟล์ที่จำเป็นทั้งหมดก่อน
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
-requireStudent();
+requireStudent(); // ยืนยันว่าเป็นนักเรียน
+
+// 2. (จะเปิดใช้งานในอนาคต) หลังจากยืนยันตัวตนแล้วจึงเรียกใช้ 'ยามเฝ้าประตู'
+// require_once '../includes/access_control.php'; 
 
 $user_id = $_SESSION['user_id'];
 $name = $_SESSION['name'];
@@ -17,7 +21,7 @@ $games = [
     5 => ['code' => 'Flowchart', 'title' => 'บทที่ 5: ผังงาน (Flowchart)'],
 ];
 
-// ฟังก์ชันดึงข้อมูลความคืบหน้า (ฉบับเสถียร)
+// ฟังก์ชันดึงข้อมูลความคืบหน้า (ฉบับเสถียรและทบทวนแล้ว)
 function getGameProgress($conn, $user_id, $chapter_id)
 {
     $stmt_stages = $conn->prepare("SELECT id FROM stages WHERE chapter_id = ?");
@@ -79,29 +83,55 @@ function getGameProgress($conn, $user_id, $chapter_id)
     <style>
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #0a192f;
+            background-color: #0d1b2a;
             color: white;
             min-height: 100vh;
             position: relative;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
+        /* ✅ Layer ที่ 2: ดาวเคราะห์ PNG พื้นหลังโปร่งใส */
+        body::before {
+            content: '';
+            position: fixed;
+            bottom: -5%;
+            /* ปรับตำแหน่งเล็กน้อย */
+            left: -10%;
+            width: 80vw;
+            /* ขนาดของดาวเคราะห์ */
+            height: 80vh;
+            background-image: url('../assets/img/bottom_planet.png');
+            /* ❗️ แก้ไข URL ตรงนี้ให้ถูกต้อง */
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            z-index: 1;
+            /* อยู่หลังเนื้อหา แต่หน้าดาว */
+            pointer-events: none;
+            /* ทำให้คลิกทะลุได้ */
+            opacity: 0.9;
+        }
+
+        /* ✅ Layer ที่ 1: ดาวระยิบระยับ (อยู่หลังสุด) */
         .star {
             position: absolute;
             background: white;
             border-radius: 50%;
-            animation: twinkle linear infinite, drift linear infinite;
+            animation: twinkle 3s linear infinite, drift 200s linear infinite;
+            /* ทำให้เคลื่อนที่ช้ามากๆ */
         }
 
         @keyframes drift {
             from {
-                transform: translateY(-10vh);
+                transform: translateY(-20vh) translateX(5vw);
             }
 
             to {
-                transform: translateY(110vh);
+                transform: translateY(120vh) translateX(-5vw);
             }
         }
+
+        /* ... โค้ด CSS ส่วนอื่นยังคงเหมือนเดิม ... */
 
         @keyframes twinkle {
 
@@ -161,7 +191,6 @@ function getGameProgress($conn, $user_id, $chapter_id)
             transform: scale(1.05);
         }
 
-        /* ✅ สไตล์ Game Card ที่ปรับปรุงใหม่ */
         .game-card {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
             backdrop-filter: blur(10px);
@@ -219,7 +248,16 @@ function getGameProgress($conn, $user_id, $chapter_id)
             vertical-align: middle;
             color: #A78BFA;
             text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+
+
         }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Layer ที่ 3: เนื้อหา */
     </style>
 </head>
 

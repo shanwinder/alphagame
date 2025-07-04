@@ -87,7 +87,7 @@ function getGameProgress($conn, $user_id, $chapter_id)
             color: white;
             min-height: 100vh;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         /* ✅ Layer ที่ 2: ดาวเคราะห์ PNG พื้นหลังโปร่งใส */

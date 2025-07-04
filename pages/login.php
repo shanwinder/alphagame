@@ -1,4 +1,6 @@
 <?php
+// --- ไฟล์: pages/login.php (ฉบับปรับปรุงธีมสดใส) ---
+
 session_start();
 require_once '../includes/db.php';
 
@@ -42,212 +44,117 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <meta charset="UTF-8">
-    <title>เข้าสู่ระบบ</title>
+    <title>เข้าสู่ระบบ - การผจญภัยของอัลฟ่า</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
     <style>
         body {
             font-family: 'Kanit', sans-serif;
-            background: linear-gradient(to bottom right, #a1c4fd, #c2e9fb, #fddde6);
-            min-height: 100vh;
+            /* ✅ ใช้ภาพพื้นหลังที่เราเคยสร้าง */
+            background-image: url('../assets/img/login_bg_wide.png');
+            background-size: cover;
+            background-position: center;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            margin: 0;
-        }
-
-        html,
-        body {
-            overflow-x: hidden;
-            width: 100%;
-            /* ป้องกันการเลื่อนแนวนอน */
-        }
-
-        .emoji-fly {
-            position: fixed;
-            /* เดิม: absolute */
-            font-size: 2rem;
-            animation: flyRotate 10s linear infinite;
-            opacity: 0.8;
-            max-width: 100vw;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-
-
-        .star-bg {
-            position: fixed;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(rgba(255, 255, 255, 0.9) 2px, transparent 2px),
-                radial-gradient(rgba(255, 255, 255, 0.6) 2px, transparent 2px);
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
-            animation: stars 80s linear infinite;
-            z-index: -1;
-            opacity: 0.3;
-        }
-
-        @keyframes stars {
-            from {
-                transform: translateY(0);
-            }
-
-            to {
-                transform: translateY(-500px);
-            }
-        }
-
-        main {
-            flex: 1;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
             position: relative;
+            max-width: 420px;
+            width: 100%;
         }
 
         .login-box {
-            background: #fff9f0;
+            background-color: rgba(255, 255, 255, 0.95); /* พื้นหลังสีขาวโปร่งแสงเล็กน้อย */
             padding: 40px 30px;
-            border-radius: 20px;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            border: 4px dashed #ffd166;
-            position: relative;
-            z-index: 10;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid white;
         }
 
-        h2 {
-            color: #ff6f61;
+        .login-box h2 {
+            color: #4A90E2; /* สีฟ้าสดใส */
             margin-bottom: 25px;
             font-size: 2rem;
             text-align: center;
+            font-weight: 700;
         }
 
-        .btn-primary {
-            background-color: #06d6a0;
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 1.1rem;
+        }
+
+        .btn-login {
+            background: linear-gradient(to right, #F5A623, #F8D32A); /* ไล่สีส้ม-เหลือง */
             border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 166, 35, 0.4);
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 166, 35, 0.5);
         }
 
-        .btn-primary:hover {
-            background-color: #118ab2;
-        }
-
-        /* อีโมจิลอยหมุน */
-        .emoji-fly {
+        /* ✅ ตกแต่งด้วยตัวละครอัลฟ่า */
+        .alpha-character {
             position: absolute;
-            font-size: 2rem;
-            animation: flyRotate 10s linear infinite;
-            opacity: 0.8;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            animation: float 4s ease-in-out infinite;
         }
 
-        @keyframes flyRotate {
-            0% {
-                transform: translate(0, 0) rotate(0deg);
-            }
-
-            25% {
-                transform: translate(40px, -60px) rotate(90deg);
-            }
-
-            50% {
-                transform: translate(80px, 0px) rotate(180deg);
-            }
-
-            75% {
-                transform: translate(40px, 60px) rotate(270deg);
-            }
-
-            100% {
-                transform: translate(0, 0) rotate(360deg);
-            }
-        }
-
-
-        .emoji1 {
-            top: 20px;
-            left: 20px;
-            animation-delay: 0s;
-            z-index: 2;
-        }
-
-        .emoji2 {
-            bottom: 40px;
-            right: 60px;
-            animation-delay: 2s;
-            z-index: 2;
-        }
-
-        .emoji3 {
-            top: 100px;
-            left: 60%;
-            animation-delay: 4s;
-            z-index: 2;
-        }
-
-        footer {
-            text-align: center;
-            padding: 15px 10px;
-            background: rgba(255, 255, 255, 0.75);
-        }
-
-        footer div {
-            max-width: 1000px;
-            margin: auto;
-            font-size: 0.9rem;
-            border-radius: 15px;
+        @keyframes float {
+            0% { transform: translate(-50%, 0px); }
+            50% { transform: translate(-50%, -15px); }
+            100% { transform: translate(-50%, 0px); }
         }
     </style>
 </head>
 
 <body>
+    <div class="login-container">
+        <img src="../alpha_front.png" alt="Alpha Character" class="alpha-character">
 
-    <div class="star-bg"></div>
-    <div class="emoji-fly emoji1">🌈</div>
-    <div class="emoji-fly emoji2">🪐</div>
-    <div class="emoji-fly emoji3">✨</div>
-
-    <main>
         <div class="login-box">
-            <h2>เข้าสู่ระบบ</h2>
+            <h2 class="mt-5">ยินดีต้อนรับ!</h2>
 
             <?php if (!empty($message)): ?>
-                <div class="alert alert-warning text-center"><?php echo $message; ?></div>
+                <div class="alert alert-danger text-center"><?= $message; ?></div>
             <?php endif; ?>
 
             <form method="post">
                 <div class="mb-3">
                     <label for="username" class="form-label">ชื่อผู้ใช้ (รหัสนักเรียน)</label>
-                    <input type="text" class="form-control" name="username" id="username" required autofocus>
+                    <input type="text" class="form-control" name="username" id="username" required autofocus autocomplete="username">
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="form-label">รหัสผ่าน</label>
-                    <input type="password" class="form-control" name="password" id="password" required>
+                    <input type="password" class="form-control" name="password" id="password" required autocomplete="current-password">
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">🎮 เข้าสู่ระบบ</button>
+                <button type="submit" class="btn-login w-100 mt-3">
+                    <i class="fas fa-rocket"></i> เข้าสู่การผจญภัย
+                </button>
             </form>
         </div>
-    </main>
-
-    <footer>
-        <div>
-            <p class="mb-1">พัฒนาระบบโดย <strong>นายณัฐดนัย สุวรรณไตรย์</strong><br>
-                ครู โรงเรียนบ้านนาอุดม<br>
-                สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษามุกดาหาร</p>
-            <p class="text-muted mb-0">&copy; <?= date("Y") ?> Developed by Mr. Natdanai Suwannatrai. All rights
-                reserved.</p>
-        </div>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

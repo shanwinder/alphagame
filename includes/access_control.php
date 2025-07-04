@@ -1,6 +1,5 @@
 <?php
 // --- ไฟล์: includes/access_control.php (ฉบับแก้ไข) ---
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -9,7 +8,8 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
     return;
 }
 
-require_once __DIR__ . '/db.php';
+// ไม่ต้อง require 'db.php' ที่นี่แล้ว เพราะไฟล์หลักเรียกให้แล้ว
+global $conn; // ใช้ connection ที่ไฟล์หลักสร้างไว้
 
 $settings_result = $conn->query("SELECT setting_key, setting_value FROM system_settings");
 $settings = [];
@@ -53,4 +53,3 @@ if (!$allow_access) {
     }
     exit();
 }
-?>

@@ -2,9 +2,13 @@
 // --- ไฟล์: pages/student_dashboard.php (ฉบับสมบูรณ์ล่าสุด) ---
 
 session_start();
+// 1. เรียกใช้ไฟล์ที่จำเป็นทั้งหมดก่อน
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
-requireStudent();
+requireStudent(); // ยืนยันว่าเป็นนักเรียน
+
+// 2. (จะเปิดใช้งานในอนาคต) หลังจากยืนยันตัวตนแล้วจึงเรียกใช้ 'ยามเฝ้าประตู'
+// require_once '../includes/access_control.php'; 
 
 $user_id = $_SESSION['user_id'];
 $name = $_SESSION['name'];
@@ -17,7 +21,7 @@ $games = [
     5 => ['code' => 'Flowchart', 'title' => 'บทที่ 5: ผังงาน (Flowchart)'],
 ];
 
-// ฟังก์ชันดึงข้อมูลความคืบหน้า (ฉบับเสถียร)
+// ฟังก์ชันดึงข้อมูลความคืบหน้า (ฉบับเสถียรและทบทวนแล้ว)
 function getGameProgress($conn, $user_id, $chapter_id)
 {
     $stmt_stages = $conn->prepare("SELECT id FROM stages WHERE chapter_id = ?");
@@ -30,11 +34,12 @@ function getGameProgress($conn, $user_id, $chapter_id)
     }
     $stmt_stages->close();
 
+    $total_stages_in_chapter = count($stage_ids);
+
     if (empty($stage_ids)) {
-        return ['passed' => 0, 'total' => 0, 'total_stars' => 0];
+        return ['passed' => 0, 'total' => $total_stages_in_chapter, 'total_stars' => 0];
     }
 
-    $total_stages_in_chapter = count($stage_ids);
     $placeholders = implode(',', array_fill(0, count($stage_ids), '?'));
     $types = 'i' . str_repeat('i', count($stage_ids));
     $params = array_merge([$user_id], $stage_ids);
@@ -44,6 +49,10 @@ function getGameProgress($conn, $user_id, $chapter_id)
             WHERE user_id = ? AND stage_id IN ($placeholders) AND completed_at IS NOT NULL";
 
     $stmt_progress = $conn->prepare($sql);
+    if ($stmt_progress === false) {
+        return ['passed' => 0, 'total' => $total_stages_in_chapter, 'total_stars' => 0];
+    }
+
     $bind_names = [$types];
     for ($i = 0; $i < count($params); $i++) {
         $bind_names[] = &$params[$i];
@@ -72,36 +81,72 @@ function getGameProgress($conn, $user_id, $chapter_id)
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
     <style>
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #2c3e50;
-            /* สีพื้นหลังน้ำเงิน-เทา ที่ดูสบายตาขึ้น */
-            color: white;
-            min-height: 100vh;
-            position: relative;
-            overflow: hidden;
-            /* ป้องกัน scrollbar จากดาว */
+        font-family: 'Kanit',
+        sans-serif;
+        background-color: #0d1b2a;
+        color: white;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+        /* ✅ แก้ไขตรงนี้: ซ่อนเฉพาะ scrollbar แนวนอน */
         }
 
+        /* ✅ Layer ที่ 2: ดาวเคราะห์ PNG พื้นหลังโปร่งใส */
+        body::before {
+            content: '';
+            position: fixed;
+            bottom: -5%;
+            /* ปรับตำแหน่งเล็กน้อย */
+            left: -10%;
+            width: 80vw;
+            /* ขนาดของดาวเคราะห์ */
+            height: 80vh;
+            background-image: url('../assets/img/bottom_planet.png');
+            /* ❗️ แก้ไข URL ตรงนี้ให้ถูกต้อง */
+            background-repeat: no-repeat;
+            background-position: bottom left;
+            background-size: contain;
+            z-index: 1;
+            /* อยู่หลังเนื้อหา แต่หน้าดาว */
+            pointer-events: none;
+            /* ทำให้คลิกทะลุได้ */
+            opacity: 0.9;
+        }
+
+        /* ✅ Layer ที่ 1: ดาวระยิบระยับ (อยู่หลังสุด) */
         .star {
             position: absolute;
+            background: white;
             border-radius: 50%;
-            /* ✅ เรียกใช้ 2 animation: กระพริบ และ ลอยลงมา */
-            animation: twinkle linear infinite, drift linear infinite;
+            animation: twinkle 3s linear infinite, drift 200s linear infinite;
         }
 
-        /* ✅ Animation Keyframes สำหรับการลอยลงมา */
         @keyframes drift {
             from {
-                transform: translateY(-20vh);
+                transform: translateY(-20vh) translateX(5vw);
             }
 
             to {
-                transform: translateY(120vh);
+                transform: translateY(120vh) translateX(-5vw);
             }
         }
 
-        /* ✅ Animation Keyframes สำหรับการกระพริบ */
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+        }
+        }
+
+        @keyframes drift {
+            from {
+                transform: translateY(-20vh) translateX(5vw);
+            }
+
+            to {
+                transform: translateY(120vh) translateX(-5vw);
+            }
+        }
+
         @keyframes twinkle {
 
             0%,
@@ -115,7 +160,6 @@ function getGameProgress($conn, $user_id, $chapter_id)
             }
         }
 
-        /* ✅ ทำให้ดาวมีหลายสีและขนาด */
         .star.type1 {
             width: 1px;
             height: 1px;
@@ -146,86 +190,115 @@ function getGameProgress($conn, $user_id, $chapter_id)
             font-size: 2.3rem;
             font-weight: 700;
             color: #f9c74f;
-            /* สีเหลืองทอง */
             text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
         }
 
+        .join-live-btn {
+            font-size: 1.2rem;
+            padding: 10px 30px;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .join-live-btn:hover {
+            transform: scale(1.05);
+        }
+
         .game-card {
-            background: rgba(255, 255, 255, 0.85);
-            /* ✅ ทำให้ Card โปร่งใส */
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
             text-decoration: none;
-            color: #343a40;
-            /* ตัวอักษรใน Card เป็นสีเทาเข้ม */
+            color: white;
             display: block;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
         }
 
         .game-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
         }
 
         .game-card h4 {
-            color: #4a4e69;
+            color: #FFDA63;
             margin-top: 0;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-            font-weight: 600;
+            margin-bottom: 1.2rem;
+            font-size: 1.8rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
 
         .progress-info {
-            font-size: 1rem;
-            color: #495057;
+            font-size: 1.1rem;
         }
 
         .progress {
-            background-color: #e9ecef;
-            border-radius: 20px;
-            height: 25px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 25px;
+            height: 30px;
+            margin-bottom: 1rem;
         }
 
         .progress-bar {
-            background: linear-gradient(to right, #28a745, #20c997);
+            background: linear-gradient(to right, #50E3C2, #00C6FF);
             font-weight: bold;
+            border-radius: 25px;
+            color: #222;
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
         }
 
         .game-card strong {
-            color: #e63946;
-            font-size: 1.1em;
+            color: #F97F51;
+            font-size: 1.2em;
+            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-card .icon-chapter {
+            font-size: 2rem;
+            margin-right: 15px;
+            vertical-align: middle;
+            color: #A78BFA;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
 
 <body>
-
     <?php include '../includes/student_header.php'; ?>
-
     <div class="content-wrapper">
         <main class="container my-5">
-            <div class="welcome text-center mb-5">เลือกบทเรียนเพื่อเริ่มการผจญภัยได้เลย! ✨</div>
+            <div class="welcome text-center mb-4">เลือกบทเรียนเพื่อเริ่มการผจญภัยได้เลย! ✨</div>
+            <div class="text-center mb-5">
+                <a href="join_live.php" class="btn btn-warning join-live-btn shadow">
+                    <i class="fas fa-users me-2"></i> เข้าร่วมห้องเรียน Live
+                </a>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.2);">
+            <div class="text-center my-4">
+                <h5>หรือเลือกเล่นด้วยตัวเอง:</h5>
+            </div>
             <div class="row g-4">
                 <?php foreach ($games as $chapter_id => $game):
                     $progress = getGameProgress($conn, $user_id, $chapter_id);
                     $percent = ($progress['total'] > 0) ? round(($progress['passed'] / $progress['total']) * 100) : 0;
-
-                    // คำนวณ ID ด่านแรกของบทเรียนนั้นๆ
                     $first_stage_in_chapter_id = (($chapter_id - 1) * 10) + 1;
                     $link_url = "play.php?stage_id={$first_stage_in_chapter_id}";
                     ?>
                     <div class="col-md-6 col-lg-4">
                         <a href="<?= $link_url ?>" class="game-card">
-                            <h4><i class="fas fa-rocket me-2 text-primary"></i> <?= htmlspecialchars($game['title']) ?></h4>
+                            <h4><i class="fas fa-rocket icon-chapter"></i> <?= htmlspecialchars($game['title']) ?></h4>
                             <div class="progress-info">
-                                <p class="mb-1">ความคืบหน้า: <strong><?= $progress['passed'] ?></strong> /
-                                    <?= $progress['total'] ?> ด่าน</p>
+                                <p class="mb-2">ความคืบหน้า: <strong><?= $progress['passed'] ?></strong> /
+                                    <?= $progress['total'] ?> ด่าน
+                                </p>
                                 <div class="progress">
                                     <div class="progress-bar" role="progressbar" style="width: <?= $percent ?>%;"
                                         aria-valuenow="<?= $percent ?>" aria-valuemin="0" aria-valuemax="100">
-                                        <?= $percent ?>%</div>
+                                        <?= $percent ?>%
+                                    </div>
                                 </div>
                                 <p class="mt-2 mb-0"><strong><i class="fas fa-star text-warning me-1"></i> ดาวสะสม:</strong>
                                     <?= $progress['total_stars'] ?> ดวง</p>
@@ -235,32 +308,24 @@ function getGameProgress($conn, $user_id, $chapter_id)
                 <?php endforeach; ?>
             </div>
         </main>
-
         <?php include '../includes/student_footer.php'; ?>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const starContainer = document.body;
             const numberOfStars = 200;
             const starTypes = ['type1', 'type2', 'type3'];
-
             for (let i = 0; i < numberOfStars; i++) {
                 let star = document.createElement('div');
                 star.classList.add('star');
                 star.classList.add(starTypes[Math.floor(Math.random() * starTypes.length)]);
-
                 star.style.left = Math.random() * 100 + 'vw';
-                star.style.top = -10 + 'vh'; // ให้ดาวทุกดวงเริ่มจากข้างบน
-
-                // สุ่มความหน่วงและระยะเวลาของ animation แต่ละตัว
+                star.style.top = -10 + 'vh';
                 const twinkleDelay = (Math.random() * 5) + 's';
                 const driftDelay = (Math.random() * 10) + 's';
                 const twinkleDuration = (2 + Math.random() * 3) + 's';
-                const driftDuration = (40 + Math.random() * 60) + 's'; // ลอยลงมาช้าๆ 40-100 วินาที
-
+                const driftDuration = (40 + Math.random() * 60) + 's';
                 star.style.animation = `twinkle ${twinkleDuration} linear ${twinkleDelay} infinite, drift ${driftDuration} linear ${driftDelay} infinite`;
-
                 starContainer.insertBefore(star, starContainer.firstChild);
             }
         });
